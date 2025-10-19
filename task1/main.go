@@ -95,16 +95,26 @@ func main() {
 	// aflterMerge5 := merge(intervals5)
 	// fmt.Println(aflterMerge5)
 
-	nums1 := []int{2,7,11,15}
-	target1 := 9
-	tartNums1 := twoSum(nums1, target1)
-	fmt.Println(tartNums1)
-	nums2 := []int{-3,4,3,90}
-	target2 := 0
-	tartNums2 := twoSum(nums2, target2)
-	fmt.Println(tartNums2)
+	// nums1 := []int{2,7,11,15}
+	// target1 := 9
+	// tartNums1 := twoSum(nums1, target1)
+	// fmt.Println(tartNums1)
+	// nums2 := []int{-3,4,3,90}
+	// target2 := 0
+	// tartNums2 := twoSum(nums2, target2)
+	// fmt.Println(tartNums2)
+
+	var a = "abc"
+	b := "abc"
+	fmt.Println(a)
+	fmt.Println(b)
+	demo()
 }
 
+func demo() {
+	var a,b,c = 1,2,3
+	fmt.Println("demo", a, b, c)
+}
 
 // 给定一个非空整数数组，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。
 // 可以使用 for 循环遍历数组，结合 if 条件判断和 map 数据结构来解决，
