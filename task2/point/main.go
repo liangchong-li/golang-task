@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sync"
 )
 
 func main() {
@@ -11,12 +10,11 @@ func main() {
 	point1(&num1)
 	fmt.Println("修改后变量num1:", num1)
 
-	var slide []int = []int{1,2,3}
+	var slide []int = []int{1, 2, 3}
 	fmt.Println("原始变量slide:", slide)
 	point2(&slide)
 	fmt.Println("修改后变量slide:", slide)
 }
-
 
 // 题目 ：编写一个Go程序，定义一个函数，该函数接收一个整数指针作为参数，在函数内部将该指针指向的值增加10，
 // 然后在主函数中调用该函数并输出修改后的值。
