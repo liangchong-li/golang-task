@@ -79,13 +79,19 @@ func main() {
 	}
 
 	//编写Go代码，使用Gorm查询评论数量最多的文章信息。
-	post := Post{}
+	//post := Post{}
 	// db.Order("CommentNum desc").First(&post)
 	// Error 1054 (42S22): Unknown column 'CommentNum' in 'order clause'
-
-	db.Order("comment_num desc").First(&post)
 	//db.Debug()
-	fmt.Println("评论数量最多的文章信息: ", post)
+
+	// 最多的一个
+	//db.Order("comment_num desc").First(&post)
+
+	// 最多的多个
+	var posts []Post
+	db.Where("comment_num = (select max(comment_num) from posts)").Find(&posts)
+	db.Debug()
+	fmt.Println("评论数量最多的文章信息: ", posts)
 }
 
 func savePost(db *gorm.DB, post *Post) {
