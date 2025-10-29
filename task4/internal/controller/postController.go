@@ -1,11 +1,14 @@
 package controller
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"log"
+
 	"task4/config"
 	"task4/internal/model"
+	"task4/internal/util"
 )
 
 // 实现文章的创建功能，只有已认证的用户才能创建文章，创建文章时需要提供文章的标题和内容。
@@ -25,9 +28,7 @@ type PostRequest struct {
 func (p *PostController) Create(c *gin.Context) {
 	var req PostRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{
-			"message": "参数异常!",
-		})
+		util.BadRequest(c, err.Error())
 		log.Fatal("参数异常!", err)
 	}
 
@@ -44,9 +45,7 @@ func (p *PostController) Create(c *gin.Context) {
 		})
 		log.Fatal("插入失败!", tx.Error)
 	}
-	c.JSON(200, gin.H{
-		"message": "创建文章成功!",
-	})
+	util.Success(c, "创建文章成功")
 }
 
 func (p *PostController) List(c *gin.Context) {
@@ -60,7 +59,8 @@ func (p *PostController) List(c *gin.Context) {
 		})
 		log.Fatal("查询失败!", tx.Error)
 	}
-	c.JSON(200, posts)
+
+	util.Success(c, posts)
 }
 
 func (p *PostController) Info(c *gin.Context) {
@@ -74,15 +74,14 @@ func (p *PostController) Info(c *gin.Context) {
 		})
 		log.Fatal("查询失败!", tx.Error)
 	}
-	c.JSON(200, post)
+
+	util.Success(c, post)
 }
 
 func (p *PostController) Update(c *gin.Context) {
 	var req PostRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{
-			"message": "参数异常!",
-		})
+		util.BadRequest(c, err.Error())
 		log.Fatal("参数异常!", err)
 	}
 
@@ -101,9 +100,7 @@ func (p *PostController) Update(c *gin.Context) {
 		})
 		log.Fatal("更新失败!", tx.Error)
 	}
-	c.JSON(200, gin.H{
-		"message": "更新文章成功!",
-	})
+	util.Success(c, "更新文章成功!")
 }
 
 func (p *PostController) Delete(c *gin.Context) {
@@ -117,5 +114,5 @@ func (p *PostController) Delete(c *gin.Context) {
 		})
 		log.Fatal("删除失败!", tx.Error)
 	}
-	c.JSON(200, post)
+	util.Success(c, "删除文章成功!")
 }
