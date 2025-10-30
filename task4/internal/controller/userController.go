@@ -28,7 +28,8 @@ func (u *UserController) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		util.BadRequest(c, err.Error())
-		log.Fatal("参数异常!", err)
+		//log.Fatal("参数异常!", err)
+		return
 	}
 
 	user := model.User{
@@ -36,6 +37,13 @@ func (u *UserController) Register(c *gin.Context) {
 		Password: req.Password,
 		Email:    req.Email,
 	}
+
+	password, err := user.HashedPassword()
+	if err != nil {
+		log.Fatal("加密失败!", err)
+	}
+
+	user.Password = password
 
 	tx := config.DB.Create(&user)
 	if tx.Error != nil {
@@ -54,7 +62,8 @@ func (u *UserController) Login(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		util.BadRequest(c, err.Error())
 		// TODO：该函数执行后，程序会结束
-		log.Fatal("参数异常!", err)
+		//log.Fatal("参数异常!", err)
+		return
 	}
 
 	var user model.User
@@ -66,7 +75,20 @@ func (u *UserController) Login(c *gin.Context) {
 		log.Fatal("查询失败!", tx.Error)
 	}
 
-	util.Success(c, user)
+	// 验证密码
+	if err := user.CheckPassword(req.Password); err != nil {
+		util.BadRequest(c, "密码错误!")
+	}
+
+	// 返回token
+	token, err := util.Generate(user.ID, user.Username)
+	if err != nil {
+		log.Fatal("生成token失败", err)
+	}
+	util.Success(c, gin.H{
+		"token": token,
+		"user":  user,
+	})
 	//engine := gin.Default()
 	/*engine.GET("/ping", func() {
 		c.JSON(200, gin.H{

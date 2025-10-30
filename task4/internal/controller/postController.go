@@ -1,41 +1,47 @@
 package controller
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"log"
+	"strconv"
 
 	"task4/config"
 	"task4/internal/model"
 	"task4/internal/util"
 )
 
-// 实现文章的创建功能，只有已认证的用户才能创建文章，创建文章时需要提供文章的标题和内容。
-// 实现文章的读取功能，支持获取所有文章列表和单个文章的详细信息。
-// 实现文章的更新功能，只有文章的作者才能更新自己的文章。
-// 实现文章的删除功能，只有文章的作者才能删除自己的文章。
 type PostController struct {
 }
 
-type PostRequest struct {
-	ID      uint   `json:"id"`
+type CreateRequest struct {
+	Title   string `json:"title" binding:"required"`
+	Content string `json:"content" binding:"required"`
+}
+type UpdateRequest struct {
+	ID      uint   `json:"id" binding:"required"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
-	UserID  uint   `json:"userID"`
 }
 
+// Create 实现文章的创建功能，只有已认证的用户才能创建文章，创建文章时需要提供文章的标题和内容。
 func (p *PostController) Create(c *gin.Context) {
-	var req PostRequest
+	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		util.BadRequest(c, err.Error())
-		log.Fatal("参数异常!", err)
+		return
+		//log.Fatal("参数异常!", err)
+	}
+
+	value, exists := c.Get("user_id")
+	if !exists {
+		util.Unauthorized(c, "用户未认证")
 	}
 
 	post := model.Post{
 		Title:   req.Title,
 		Content: req.Content,
-		UserID:  req.UserID,
+		UserID:  value.(uint),
 	}
 
 	tx := config.DB.Create(&post)
@@ -48,6 +54,7 @@ func (p *PostController) Create(c *gin.Context) {
 	util.Success(c, "创建文章成功")
 }
 
+// List 实现文章的读取功能，支持获取所有文章列表和单个文章的详细信息。
 func (p *PostController) List(c *gin.Context) {
 
 	var posts []model.Post
@@ -78,11 +85,18 @@ func (p *PostController) Info(c *gin.Context) {
 	util.Success(c, post)
 }
 
+// Update 实现文章的更新功能，只有文章的作者才能更新自己的文章。
 func (p *PostController) Update(c *gin.Context) {
-	var req PostRequest
+	var req UpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		util.BadRequest(c, err.Error())
-		log.Fatal("参数异常!", err)
+		//log.Fatal("参数异常!", err)
+		return
+	}
+
+	// 操作之前，先查询。检查文章的作者是否为自己
+	if !checkPostPermission(c, req.ID) {
+		return
 	}
 
 	post := model.Post{
@@ -103,8 +117,19 @@ func (p *PostController) Update(c *gin.Context) {
 	util.Success(c, "更新文章成功!")
 }
 
+// Delete 实现文章的删除功能，只有文章的作者才能删除自己的文章。
 func (p *PostController) Delete(c *gin.Context) {
-	id := c.Param("id")
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		util.BadRequest(c, "无效的文章ID")
+		return
+	}
+
+	// 操作之前，先查询。检查文章的作者是否为自己
+	if !checkPostPermission(c, uint(id)) {
+		return
+	}
 
 	var post model.Post
 	tx := config.DB.Delete(&post, id)
@@ -115,4 +140,30 @@ func (p *PostController) Delete(c *gin.Context) {
 		log.Fatal("删除失败!", tx.Error)
 	}
 	util.Success(c, "删除文章成功!")
+}
+
+func checkPostPermission(c *gin.Context, postID uint) bool {
+	var post model.Post
+	tx := config.DB.First(&post, postID)
+	if tx.Error != nil {
+		// 记录错误日志，并返回500
+		c.JSON(500, gin.H{
+			"message": "查询失败!",
+		})
+		log.Println("查询失败!", tx.Error)
+		return false
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		util.Unauthorized(c, "用户未认证")
+		return false
+	}
+
+	if post.UserID != userID.(uint) {
+		util.Unauthorized(c, "您不是本文章的作者,无法操作!")
+		return false
+	}
+
+	return true
 }

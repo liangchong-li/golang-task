@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"task4/internal/controller"
+	"task4/internal/middleware"
 )
 
 func SetupRoutes() {
@@ -16,25 +17,45 @@ func SetupRoutes() {
 
 	// 路由分组
 	v1 := engine.Group("v1/api")
+
+	// 用户登录、注册。无需认证
 	user := v1.Group("/user")
 	{
 		user.POST("/register", userController.Register)
 		user.POST("/login", userController.Login)
 	}
 
-	post := v1.Group("/post")
+	// 需要认证的路由
+	authed := v1.Group("")
+	// 注册权限认证中间件
+	authed.Use(middleware.Auth())
 	{
-		post.POST("/create", postController.Create)
-		post.PUT("/update", postController.Update)
-		post.GET("/list", postController.List)
-		post.GET("/:id", postController.Info)
-		post.DELETE("/:id", postController.Delete)
+		// 文章接口，需要认证的
+		post := authed.Group("/post")
+		{
+			post.POST("/create", postController.Create)
+			post.PUT("/update", postController.Update)
+			post.DELETE("/:id", postController.Delete)
+		}
+
+		// 评论接口，需要认证的
+		comment := authed.Group("/:post_id/comment")
+		{
+			comment.POST("/commit", commentController.Commit)
+		}
 	}
 
-	comment := v1.Group("/comment")
+	// 不需要认证的路由
+	noAuth := v1.Group("")
+	post := noAuth.Group("/post")
 	{
-		comment.POST("/commit", commentController.Commit)
-		comment.GET("/:id", commentController.Read)
+		post.GET("/list", postController.List)
+		post.GET("/:id", postController.Info)
+	}
+
+	comment := noAuth.Group("/:post_id/comment")
+	{
+		comment.GET("/list", commentController.Read)
 	}
 
 	err := engine.Run()

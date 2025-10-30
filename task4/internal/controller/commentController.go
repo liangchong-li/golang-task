@@ -19,14 +19,13 @@ type CommentRequest struct {
 	PostID  uint   `json:"postID"`
 }
 
-//实现评论的创建功能，已认证的用户可以对文章发表评论。
-//实现评论的读取功能，支持获取某篇文章的所有评论列表。
-
+// Commit 实现评论的创建功能，已认证的用户可以对文章发表评论。
 func (cm *CommentController) Commit(c *gin.Context) {
 	var req CommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		util.BadRequest(c, err.Error())
-		log.Fatal("参数异常!", err)
+		//log.Fatal("参数异常!", err)
+		return
 	}
 
 	comment := model.Comment{
@@ -46,6 +45,7 @@ func (cm *CommentController) Commit(c *gin.Context) {
 
 }
 
+// Read 实现评论的读取功能，支持获取某篇文章的所有评论列表。
 func (cm *CommentController) Read(c *gin.Context) {
 	id := c.Param("id")
 

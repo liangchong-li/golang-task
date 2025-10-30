@@ -19,8 +19,8 @@ type User struct {
 }
 
 // HashedPassword 密码加密
-func HashedPassword(pw string) (string, error) {
-	hashedPw, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+func (u *User) HashedPassword() (string, error) {
+	hashedPw, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
