@@ -6,7 +6,7 @@ import (
 	"task4/internal/util"
 )
 
-func Auth() gin.HandlerFunc {
+func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. 是否有token
 		auth := c.GetHeader("Authorization")

@@ -10,6 +10,11 @@ import (
 func SetupRoutes() {
 	engine := gin.New()
 
+	engine.Use(middleware.LoggerMiddleware())
+	engine.Use(middleware.ErrorHandleMiddleware())
+	// 恢复任何恐慌（panic），确保服务器不会因为某个请求发生恐慌而崩溃。
+	engine.Use(gin.Recovery())
+
 	// 创建控制器实例
 	userController := &controller.UserController{}
 	postController := &controller.PostController{}
@@ -28,7 +33,7 @@ func SetupRoutes() {
 	// 需要认证的路由
 	authed := v1.Group("")
 	// 注册权限认证中间件
-	authed.Use(middleware.Auth())
+	authed.Use(middleware.AuthMiddleware())
 	{
 		// 文章接口，需要认证的
 		post := authed.Group("/post")

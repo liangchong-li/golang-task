@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
 
 	"task4/config"
@@ -24,7 +22,6 @@ func (cm *CommentController) Commit(c *gin.Context) {
 	var req CommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		util.BadRequest(c, err.Error())
-		//log.Fatal("参数异常!", err)
 		return
 	}
 
@@ -36,10 +33,8 @@ func (cm *CommentController) Commit(c *gin.Context) {
 
 	tx := config.DB.Create(&comment)
 	if tx.Error != nil {
-		c.JSON(500, gin.H{
-			"message": "插入失败!",
-		})
-		log.Fatal("插入失败!", tx.Error)
+		util.InternalServerError(c, "新增文章评论失败")
+		return
 	}
 	util.Success(c, "提交评论成功!")
 
@@ -53,10 +48,8 @@ func (cm *CommentController) Read(c *gin.Context) {
 	tx := config.DB.Where("post_id = ?", id).Find(&comments)
 	//tx := config.DB.Debug().Where("post_id = ?", id).Find(&comment)
 	if tx.Error != nil {
-		c.JSON(500, gin.H{
-			"message": "查询失败!",
-		})
-		log.Fatal("查询失败!", tx.Error)
+		util.NotFound(c, "未找到文章评论")
+		return
 	}
 	util.Success(c, comments)
 }

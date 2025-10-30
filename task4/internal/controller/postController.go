@@ -3,7 +3,6 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"log"
 	"strconv"
 
 	"task4/config"
@@ -30,12 +29,12 @@ func (p *PostController) Create(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		util.BadRequest(c, err.Error())
 		return
-		//log.Fatal("参数异常!", err)
 	}
 
 	value, exists := c.Get("user_id")
 	if !exists {
 		util.Unauthorized(c, "用户未认证")
+		return
 	}
 
 	post := model.Post{
@@ -46,10 +45,8 @@ func (p *PostController) Create(c *gin.Context) {
 
 	tx := config.DB.Create(&post)
 	if tx.Error != nil {
-		c.JSON(500, gin.H{
-			"message": "插入失败!",
-		})
-		log.Fatal("插入失败!", tx.Error)
+		util.InternalServerError(c, "新增文章失败")
+		return
 	}
 	util.Success(c, "创建文章成功")
 }
@@ -61,10 +58,8 @@ func (p *PostController) List(c *gin.Context) {
 
 	tx := config.DB.Find(&posts)
 	if tx.Error != nil {
-		c.JSON(500, gin.H{
-			"message": "查询失败!",
-		})
-		log.Fatal("查询失败!", tx.Error)
+		util.NotFound(c, "查询文章列表失败")
+		return
 	}
 
 	util.Success(c, posts)
@@ -76,10 +71,8 @@ func (p *PostController) Info(c *gin.Context) {
 	var post model.Post
 	tx := config.DB.Find(&post, id)
 	if tx.Error != nil {
-		c.JSON(500, gin.H{
-			"message": "查询失败!",
-		})
-		log.Fatal("查询失败!", tx.Error)
+		util.NotFound(c, "查询文章详情失败")
+		return
 	}
 
 	util.Success(c, post)
@@ -90,7 +83,6 @@ func (p *PostController) Update(c *gin.Context) {
 	var req UpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		util.BadRequest(c, err.Error())
-		//log.Fatal("参数异常!", err)
 		return
 	}
 
@@ -109,10 +101,8 @@ func (p *PostController) Update(c *gin.Context) {
 
 	tx := config.DB.Model(&post).Updates(post)
 	if tx.Error != nil {
-		c.JSON(500, gin.H{
-			"message": "更新失败!",
-		})
-		log.Fatal("更新失败!", tx.Error)
+		util.InternalServerError(c, "更新文章失败")
+		return
 	}
 	util.Success(c, "更新文章成功!")
 }
@@ -134,10 +124,8 @@ func (p *PostController) Delete(c *gin.Context) {
 	var post model.Post
 	tx := config.DB.Delete(&post, id)
 	if tx.Error != nil {
-		c.JSON(500, gin.H{
-			"message": "删除失败!",
-		})
-		log.Fatal("删除失败!", tx.Error)
+		util.InternalServerError(c, "删除文章失败")
+		return
 	}
 	util.Success(c, "删除文章成功!")
 }
@@ -146,11 +134,7 @@ func checkPostPermission(c *gin.Context, postID uint) bool {
 	var post model.Post
 	tx := config.DB.First(&post, postID)
 	if tx.Error != nil {
-		// 记录错误日志，并返回500
-		c.JSON(500, gin.H{
-			"message": "查询失败!",
-		})
-		log.Println("查询失败!", tx.Error)
+		util.NotFound(c, "未找到文章信息")
 		return false
 	}
 
