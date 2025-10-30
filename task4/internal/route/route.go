@@ -2,18 +2,17 @@ package route
 
 import (
 	"github.com/gin-gonic/gin"
-	"log"
 	"task4/internal/controller"
 	"task4/internal/middleware"
 )
 
-func SetupRoutes() {
-	engine := gin.New()
+func SetupRoutes() *gin.Engine {
+	router := gin.New()
 
-	engine.Use(middleware.LoggerMiddleware())
-	engine.Use(middleware.ErrorHandleMiddleware())
+	router.Use(middleware.LoggerMiddleware())
+	router.Use(middleware.ErrorHandleMiddleware())
 	// 恢复任何恐慌（panic），确保服务器不会因为某个请求发生恐慌而崩溃。
-	engine.Use(gin.Recovery())
+	router.Use(gin.Recovery())
 
 	// 创建控制器实例
 	userController := &controller.UserController{}
@@ -21,7 +20,7 @@ func SetupRoutes() {
 	commentController := &controller.CommentController{}
 
 	// 路由分组
-	v1 := engine.Group("v1/api")
+	v1 := router.Group("v1/api")
 
 	// 用户登录、注册。无需认证
 	user := v1.Group("/user")
@@ -63,9 +62,5 @@ func SetupRoutes() {
 		comment.GET("/list", commentController.Read)
 	}
 
-	err := engine.Run()
-	if err != nil {
-		log.Fatal("路由启动异常", err)
-		return
-	}
+	return router
 }

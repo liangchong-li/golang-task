@@ -46,3 +46,15 @@ func getEnv(k string, defaultValue string) string {
 	}
 	return defaultValue
 }
+
+func CloseDB() {
+	if DB != nil {
+		sqlDB, err := DB.DB()
+		if err == nil {
+			err := sqlDB.Close()
+			if err != nil {
+				return
+			}
+		}
+	}
+}
